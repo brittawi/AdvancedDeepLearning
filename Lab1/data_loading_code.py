@@ -1,16 +1,13 @@
 import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
-from matplotlib import pyplot
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from nltk.corpus import stopwords
 from nltk import word_tokenize
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, classification_report
+import nltk
+import re
 
 def preprocess_pandas(data, columns):
     df_ = pd.DataFrame(columns=columns)
@@ -22,17 +19,17 @@ def preprocess_pandas(data, columns):
     for index, row in data.iterrows():
         word_tokens = word_tokenize(row['Sentence'])
         filtered_sent = [w for w in word_tokens if not w in stopwords.words('english')]
-        df_ = df_.append({
+        df_ = df_._append({
             "index": row['index'],
             "Class": row['Class'],
             "Sentence": " ".join(filtered_sent[0:])
         }, ignore_index=True)
     return data
 
-# If this is the primary file that is executed (ie not an import of another file)
-if __name__ == "__main__":
-    # get data, pre-process and split
-    data = pd.read_csv("amazon_cells_labelled.txt", delimiter='\t', header=None)
+# "amazon_cells_labelled.txt"
+
+def getData(fileName):
+    data = pd.read_csv(fileName, delimiter='\t', header=None)
     data.columns = ['Sentence', 'Class']
     data['index'] = data.index                                          # add new column index
     columns = ['index', 'Class', 'Sentence']
@@ -56,3 +53,30 @@ if __name__ == "__main__":
     train_y_tensor = torch.from_numpy(np.array(training_labels)).long()
     validation_x_tensor = torch.from_numpy(np.array(validation_data)).type(torch.FloatTensor)
     validation_y_tensor = torch.from_numpy(np.array(validation_labels)).long()
+
+    print("Train data:", train_x_tensor.shape)
+    print("Train labels:", train_y_tensor.shape)
+    print("Validation data:", validation_x_tensor.shape)
+    print("Validation labels:", validation_y_tensor.shape)
+    print("Vocab size:", vocab_size)
+    print("Successfully preprocessed the data")
+
+    return train_x_tensor, train_y_tensor, validation_x_tensor, validation_y_tensor, vocab_size, word_vectorizer
+
+def processUserInput(input, word_vectorizer):
+    
+    input = input.lower()
+    input = re.sub('[a-zA-Z0-9-_.]+@[a-zA-Z0-9-_.]+', '', input)                      # remove emails
+    input = re.sub('((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}', '', input)    # remove IP address
+    input = re.sub('[^\w\s]','', input)                                                       # remove special characters
+    input = re.sub('\d', '', input) 
+    word_tokens = word_tokenize(input)
+    filtered_sent = [w for w in word_tokens if not w in stopwords.words('english')]
+    input_processed = " ".join(filtered_sent)
+    
+    input_vectorized = word_vectorizer.transform([input_processed])
+    
+    # Convert to PyTorch tensor
+    user_tensor = torch.tensor(input_vectorized.toarray(), dtype=torch.float32)
+    
+    return user_tensor
