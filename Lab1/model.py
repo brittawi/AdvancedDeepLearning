@@ -2,6 +2,7 @@ import torch.nn as nn
 import lightning as L
 import torch.nn.functional as F
 import torch
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, classification_report
 
 class NeuralNet(nn.Module):
     def __init__(self, input_size, hidden_size, num_classes):
@@ -47,11 +48,12 @@ class LitNet(L.LightningModule):
         outputs = self.model(words)
         loss = F.cross_entropy(outputs, labels)
         
-        #acc = accuracy(outputs, labels, task="multiclass", num_classes=self.num_classes)
+        _,preds = torch.max(outputs,dim=1)
+        acc = accuracy_score(preds, labels)
 
         if stage:
             self.log(f"{stage}_loss", loss, prog_bar=True)
-            #self.log(f"{stage}_acc", acc, prog_bar=True)
+            self.log(f"{stage}_acc", acc, prog_bar=True)
     
     def validation_step(self, batch, batch_idx):
         self.evaluate(batch, "val")
@@ -114,7 +116,7 @@ class LitSeq2Seq(L.LightningModule):
         outputs = self(words)
         loss = F.nll_loss(outputs, labels)
         
-        #acc = accuracy(outputs, labels, task="multiclass", num_classes=self.num_classes)
+        #acc = accuracy(outputs, labels)
 
         if stage:
             self.log(f"{stage}_loss", loss, prog_bar=True)
