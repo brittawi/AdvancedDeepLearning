@@ -1,0 +1,24 @@
+{
+    "responses": [
+        {
+            "tag": "negative",
+            "answers": [
+                "We're sorry to hear about your experience. Please reach out to us directly so we can address your concerns.",
+                "We apologize for any inconvenience you may have experienced. Your feedback helps us improve.",
+                "We're disappointed to hear that you weren't satisfied with our product/service. We'll work to make it right.",
+                "Thank you for bringing this to our attention. We take your feedback seriously and will use it to improve.",
+                "We apologize for falling short of your expectations. Please let us know how we can make things right for you."
+            ]
+        },
+        {
+            "tag": "positive",
+            "answers": [
+                "Thank you for your kind words! We're thrilled to hear that you had a positive experience with us.",
+                "We're so glad to hear that you enjoyed our product! Your satisfaction is our top priority.",
+                "Wow, thank you for the glowing review! We strive to provide the best service possible.",
+                "We appreciate your feedback! It's great to know that you found our product/service helpful.",
+                "Thanks for taking the time to leave such a positive review! We look forward to serving you again in the future."
+            ]
+        }
+    ]
+}

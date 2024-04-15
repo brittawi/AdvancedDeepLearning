@@ -18,7 +18,7 @@ class NeuralNet(nn.Module):
         out = self.l2(out)
         out = self.relu(out)
         out = self.l3(out)
-        # no activation and no softmax at the end
+
         return out
     
 class LitNet(L.LightningModule):

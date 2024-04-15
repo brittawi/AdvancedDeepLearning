@@ -80,3 +80,5 @@ def processUserInput(input, word_vectorizer):
     user_tensor = torch.tensor(input_vectorized.toarray(), dtype=torch.float32)
     
     return user_tensor
+
+    
