@@ -22,11 +22,11 @@ TRAIN = False
 
 def main(args = None):
     
+    # get the preprocessed Data
+    x_train, y_train, x_val, y_val, vocabsize, word_vectorizer = getData("amazon_cells_labelled.txt")
+    
     # train the model
     if TRAIN:
-        
-        # get the preprocessed Data
-        x_train, y_train, x_val, y_val, vocabsize, word_vectorizer = getData("amazon_cells_labelled.txt")
         
         # put data into Dataloaders
         train_loader = DataLoader(TensorDataset(x_train, y_train), batch_size=BATCH_SIZE, shuffle=True, num_workers=7, persistent_workers=True)
