@@ -8,8 +8,8 @@ from lightning.pytorch.loggers import TensorBoardLogger
 import json
 import random
 
-from data_loading_code import getData, processUserInput, deleteLabels
-from model import NeuralNet, LitNet
+from Lab1.Task1.data_loading_code import getData, processUserInput, deleteLabels
+from Lab1.Task1.model import NeuralNet, LitNet
 
 # hyperparameters
 EPOCHS = 150
@@ -83,5 +83,5 @@ def main(args = None):
 
 if __name__ == '__main__':
     
-    #main()
-    deleteLabels("amazon_cells_labelled.txt")
+    main()
+    #deleteLabels("amazon_cells_labelled.txt")
