@@ -8,7 +8,7 @@ from lightning.pytorch.loggers import TensorBoardLogger
 import json
 import random
 
-from data_loading_code import getData, processUserInput
+from data_loading_code import getData, processUserInput, deleteLabels
 from model import NeuralNet, LitNet
 
 # hyperparameters
@@ -83,4 +83,5 @@ def main(args = None):
 
 if __name__ == '__main__':
     
-    main()
+    #main()
+    deleteLabels("amazon_cells_labelled.txt")

@@ -81,4 +81,16 @@ def processUserInput(input, word_vectorizer):
     
     return user_tensor
 
+def deleteLabels(fileName):
+    # read in csv file
+    data = pd.read_csv(fileName, delimiter='\t', header=None)
+    data.columns = ['Sentence', 'Class']
+    
+    # drop labels
+    data = data.drop('Class', axis=1)
+    print(data.head(10))
+    # write to file
+    data.to_csv('amazon_cells.txt', index=False)
+    
+
     
