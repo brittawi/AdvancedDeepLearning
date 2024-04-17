@@ -209,4 +209,8 @@ for iter in range(max_iters):
 
 # generate from the model
 context = torch.zeros((1, 1), dtype=torch.long, device=device)
-print(decode(m.generate(context, max_new_tokens=2000)[0].tolist()))
+result = decode(m.generate(context, max_new_tokens=2000)[0].tolist())
+print(result)
+# Writing to file
+with open("result.txt", "w") as file1:
+    file1.writelines(result)
