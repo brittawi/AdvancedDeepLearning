@@ -8,8 +8,8 @@ from lightning.pytorch.loggers import TensorBoardLogger
 import json
 import random
 
-from Lab1.Task1.data_loading_code import getData, processUserInput, deleteLabels
-from Lab1.Task1.model import NeuralNet, LitNet
+from data_loading_code import getData, processUserInput, deleteLabels
+from model import NeuralNet, LitNet
 
 # hyperparameters
 EPOCHS = 150
@@ -18,7 +18,7 @@ LEARNING_RATE = 0.001
 HIDDEN_SIZE = 8
 NUM_CLASSES = 2 # we only have two classes
 
-TRAIN = False
+TRAIN = True
 
 def main(args = None):
     
