@@ -45,13 +45,21 @@ class DiscriminatorForMNIST(nn.Module):
         self.label_embedding = nn.Embedding(num_classes, num_classes)
 
         self.main = nn.Sequential(
-            nn.Linear(int(np.prod(img_shape)) + num_classes, 512),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(512, 256),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(256, 1),
+            *self.block(num_classes + int(np.prod(img_shape)), 1024, False, True),
+            *self.block(1024, 512, True, True),
+            *self.block(512, 256, True, True),
+            *self.block(256, 128, False, False),
+            *self.block(128, 1, False, False),
             nn.Sigmoid(),
         )
+        
+    def block(self, size_in, size_out, drop_out=True, act_func=True):
+        layers = [nn.Linear(size_in, size_out)]
+        if drop_out:
+            layers.append(nn.Dropout(0.4))
+        if act_func:
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+        return layers
 
     def forward(self, img, labels):
         img_flat = img.view(img.size(0), -1)
@@ -85,7 +93,7 @@ class LitVanillaGAN(L.LightningModule):
         self.generator = GeneratorForMNIST(latent_dim=self.hparams.latent_dim, img_shape=data_shape)
         self.discriminator = DiscriminatorForMNIST(img_shape=data_shape)
         
-        self.validation_z = torch.randn(8, 100)
+        #self.validation_z = torch.randn(8, 100)
         
         #self.example_input_array = torch.zeros(2, 100)
         
@@ -97,54 +105,38 @@ class LitVanillaGAN(L.LightningModule):
     
     def training_step(self, batch):
         
+        self.generator.train()
+        self.discriminator.train()
+        
         inputs, targets = batch
-        
         optimizer_g, optimizer_d = self.optimizers()
-        
         batch_size = inputs.size(0)
 
         # The real sample label is 1, and the generated sample label is 0.
         real_label = torch.full((batch_size, 1), 1, dtype=inputs.dtype)
         fake_label = torch.full((batch_size, 1), 0, dtype=inputs.dtype)
-
+        
+        # Train the generator
+        self.generator.zero_grad()
         noise = torch.randn([batch_size, self.hparams.latent_dim])
         conditional = torch.randint(0, 10, (batch_size,))
-
-        ##############################################
-        # (1) Update D network: max E(x)[log(D(x))] + E(z)[log(1- D(z))]
-        ##############################################
-        # Set discriminator gradients to zero.
-        optimizer_d.zero_grad()
-
-        # Train with real.
-        real_output = self.discriminator(inputs, targets)
-        d_loss_real = self.adversarial_loss(real_output, real_label)
-        d_loss_real.backward()
-
-        # Train with fake.
-        fake = self(noise, conditional)
-        fake_output = self.discriminator(fake.detach(), conditional)
-        d_loss_fake = self.adversarial_loss(fake_output, fake_label)
-        d_loss_fake.backward()
-
-        # Count all discriminator losses.
-        d_loss = d_loss_real + d_loss_fake
-        self.log("d_loss", d_loss, prog_bar=True)
-        optimizer_d.step()
-
-        ##############################################
-        # (2) Update G network: min E(z)[log(1- D(z))]
-        ##############################################
-        # Set generator gradients to zero.
-        optimizer_g.zero_grad()
-
-        fake_output = self.discriminator(fake, conditional)
-        g_loss = self.adversarial_loss(fake_output, real_label)
+        x_fake = self(noise, conditional)
+        y_fake_g = self.discriminator(x_fake, conditional)
+        g_loss = self.adversarial_loss(y_fake_g, real_label)
         self.log("g_loss", g_loss, prog_bar=True)
         g_loss.backward()
         optimizer_g.step()
         
-        
+        # Train the discriminator
+        self.discriminator.zero_grad()
+        y_real = self.discriminator(inputs, targets)
+        d_real_loss = self.adversarial_loss(y_real, real_label)
+        y_fake_d = self.discriminator(x_fake.detach(), conditional)
+        d_fake_loss = self.adversarial_loss(y_fake_d, fake_label)
+        d_loss = (d_real_loss + d_fake_loss) / 2
+        self.log("d_loss", d_loss, prog_bar=True)
+        d_loss.backward()
+        optimizer_d.step()
 
     def configure_optimizers(self):
         lr = self.hparams.lr
@@ -157,32 +149,34 @@ class LitVanillaGAN(L.LightningModule):
     
     def on_train_epoch_end(self):
         # log sampled images
-        z = self.validation_z.type_as(self.generator.main[0].weight)
-        conditional = torch.randint(0, 10, (8,))
-        sample_imgs = self(z, conditional)
-        grid = torchvision.utils.make_grid(sample_imgs)
-        self.logger.experiment.add_image("generated_images", grid, self.current_epoch)
+        with torch.no_grad():
+            noise = torch.randn(8, 100)
+            conditional = torch.randint(0, 10, (8,))
+            sample_imgs = self(noise, conditional)
+            grid = torchvision.utils.make_grid(sample_imgs)
+            self.logger.experiment.add_image("generated_images", grid, self.current_epoch)
         
 if __name__ == '__main__':
     
-    Train = False
+    torch.manual_seed(1)
+    
+    Train = True
     if Train:
         dm = MNISTDataModule()
         model = LitVanillaGAN(*dm.dims)
         
         trainer = L.Trainer(
         accelerator="auto",
-        devices=1,
-        max_epochs=128,
+        max_epochs=15,
         fast_dev_run=False,
         )
         
         trainer.fit(model, dm)
         
-        trainer.save_checkpoint("best_model.ckpt")
+        trainer.save_checkpoint("best_model_2.ckpt")
     
     # load model
-    gan = LitVanillaGAN.load_from_checkpoint("best_model.ckpt")
+    gan = LitVanillaGAN.load_from_checkpoint("best_model_2.ckpt")
     gan.eval()
     z = torch.randn(100, 100)
     print(z.shape)
@@ -193,5 +187,7 @@ if __name__ == '__main__':
     ax.imshow(grid.permute(1, 2, 0).data, cmap='binary')
     ax.axis('off')
     plt.show()
+    
+            
             
         
