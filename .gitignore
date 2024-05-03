@@ -2,6 +2,7 @@
 /Lab1/Task1/__pycache__/
 /Lab1/Task2/__pycache__/
 /Lab2/__pycache__/
+/lab3/__pycache__/
 
 
 # lightning logs
@@ -9,7 +10,10 @@
 /Lab2/lightning_logs/
 /Lab2/tb_logs/
 /lightning_logs/
+/Lab2/ResultsVanillaGAN/
 
 /Lab2/MNIST/
 /Lab2/data/
 /MNIST/
+/data/
+/runs/
