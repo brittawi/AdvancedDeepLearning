@@ -59,7 +59,7 @@ class Vocabulary:
 
 
 class FlickrDataset(Dataset):
-    def __init__(self, root_dir, captions_file, transform=None, freq_threshold=5):
+    def __init__(self, root_dir, captions_file, transform=None, freq_threshold=5, vocab=None):
         self.root_dir = root_dir
         self.df = pd.read_csv(captions_file)
         self.transform = transform
@@ -69,8 +69,11 @@ class FlickrDataset(Dataset):
         self.captions = self.df["caption"]
 
         # Initialize vocabulary and build vocab
-        self.vocab = Vocabulary(freq_threshold)
-        self.vocab.build_vocabulary(self.captions.tolist())
+        if vocab == None:
+            self.vocab = Vocabulary(freq_threshold)
+            self.vocab.build_vocabulary(self.captions.tolist())
+        else:
+            self.vocab = vocab
 
     def __len__(self):
         return len(self.df)
@@ -104,20 +107,20 @@ class MyCollate:
 
 
 def get_loader(
-    root_folder,
-    annotation_file,
-    transform,
+    train_folder,
+    annotation_file_train,
+    transform_train,
     batch_size=32,
     num_workers=8,
     shuffle=True,
     pin_memory=True,
 ):
-    dataset = FlickrDataset(root_folder, annotation_file, transform=transform)
+    train_dataset = FlickrDataset(train_folder, annotation_file_train, transform=transform_train)
+    pad_idx = train_dataset.vocab.stoi["<PAD>"]
 
-    pad_idx = dataset.vocab.stoi["<PAD>"]
-
-    loader = DataLoader(
-        dataset=dataset,
+    train_loader = DataLoader(
+        persistent_workers=True,
+        dataset=train_dataset,
         batch_size=batch_size,
         num_workers=num_workers,
         shuffle=shuffle,
@@ -125,7 +128,7 @@ def get_loader(
         collate_fn=MyCollate(pad_idx=pad_idx),
     )
 
-    return loader, dataset
+    return train_loader, train_dataset
 
 
 if __name__ == "__main__":
