@@ -18,3 +18,6 @@
 /MNIST/
 /data/
 /runs/
+
+# models
+/Lab3/best_model_image_captioning.ckpt
