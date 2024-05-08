@@ -56,11 +56,12 @@ class QNetwork(nn.Module):
         # TODO: Deinfe your network (agent)
         # Look at Section 4.1 in the paper for help: https://arxiv.org/pdf/1312.5602v1.pdf
         self.network = nn.Sequential(
-            nn.Conv2d(in_channels=4,out_channels=8, kernel_size=8, stride=4),
+            nn.Conv2d(in_channels=4,out_channels=16, kernel_size=8, stride=4),
             nn.ReLU(),
             nn.Conv2d(16, 32, kernel_size=4, stride=2),
             nn.ReLU(),
-            nn.Linear(5, 512),
+            nn.Flatten(),
+            nn.Linear(288*9, 512),
             nn.ReLU(),
             #nn.Linear(256, env.single_action_space.n)  
             nn.Linear(512, env.single_action_space.n)                
@@ -114,7 +115,8 @@ if __name__ == "__main__":
         if random.random() < epsilon:
             actions = envs.action_space.sample() # TODO: sample a random action from the environment 
         else:
-            q_values = target_network(obs) # TODO: get q_values from the network you defined, what should the network receive as input?
+            # q_network/target_network??
+            q_values = q_network(torch.from_numpy(obs)) # TODO: get q_values from the network you defined, what should the network receive as input?
             actions = torch.argmax(q_values, dim=1).cpu().numpy()
 
         # Take a step in the environment
@@ -146,10 +148,16 @@ if __name__ == "__main__":
 
                 with torch.no_grad():
                     # Now we calculate the y_j for non-terminal phi.
-                    target_max, _ = target_network(data.next_observations).max(dim=1)[0] * ~data.dones # TODO: Calculate max Q
+                    #target_max, _ = target_network(torch.from_numpy(data.next_observations)).numpy().max(dim=1)[0] * ~data.dones # TODO: Calculate max Q
+                    #test1 = target_network(data.next_observations)
+                    #test2 = test1.detach().max(1)
+                    #test3 = test2[0].unsqueeze(1)
+                    #target_max = target_network(data.next_observations)
+                    #target_max = target_max.max(1).values
+                    target_max = target_network(data.next_observations).detach().max(1)[0].unsqueeze(1)
                     td_target = data.rewards + params.gamma * target_max # TODO: Calculate the td_target (y_j)
 
-                old_val = q_network(data.observations).gather(1, data.actions).squeeze() # TODO
+                old_val = q_network(data.observations).gather(1, data.actions) # TODO
                 loss = F.mse_loss(old_val, td_target) # TODO
 
                 # perform our gradient decent step

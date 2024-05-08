@@ -9,7 +9,8 @@ class Hyperparameters:
     
     total_timesteps = 10_000_000
     learning_rate = 1e-4
-    buffer_size = 1_000_000
+    #buffer_size = 1_000_000
+    buffer_size = 1_000
     gamma = 0.99
     tau = 1
     target_network_frequency = 1000
@@ -18,5 +19,6 @@ class Hyperparameters:
     end_e = 0.01
     exploration_fraction = 0.1
     learning_starts = 80_000
+    #learning_starts = 1_000
     train_frequency = 4
 
