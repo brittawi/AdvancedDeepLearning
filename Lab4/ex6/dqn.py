@@ -148,17 +148,11 @@ if __name__ == "__main__":
 
                 with torch.no_grad():
                     # Now we calculate the y_j for non-terminal phi.
-                    #target_max, _ = target_network(torch.from_numpy(data.next_observations)).numpy().max(dim=1)[0] * ~data.dones # TODO: Calculate max Q
-                    #test1 = target_network(data.next_observations)
-                    #test2 = test1.detach().max(1)
-                    #test3 = test2[0].unsqueeze(1)
-                    #target_max = target_network(data.next_observations)
-                    #target_max = target_max.max(1).values
-                    target_max = target_network(data.next_observations).detach().max(1)[0].unsqueeze(1)
+                    target_max = target_network(data.next_observations).detach().max(1)[0].unsqueeze(1) # TODO: Calculate max Q
                     td_target = data.rewards + params.gamma * target_max # TODO: Calculate the td_target (y_j)
 
                 old_val = q_network(data.observations).gather(1, data.actions) # TODO
-                loss = F.mse_loss(old_val, td_target) # TODO
+                loss = F.mse_loss(old_val, td_target) # TODO calculate loss
 
                 # perform our gradient decent step
                 optimizer.zero_grad()
