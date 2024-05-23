@@ -112,10 +112,11 @@ if __name__ == "__main__":
         # Here we get epsilon for our epislon greedy.
         epsilon = linear_schedule(params.start_e, params.end_e, params.exploration_fraction * params.total_timesteps, global_step)
 
+        # random sampling because of the exploration/exploitation trade off
         if random.random() < epsilon:
             actions = envs.action_space.sample() # TODO: sample a random action from the environment 
         else:
-            # q_network/target_network??
+            # q_network
             q_values = q_network(torch.from_numpy(obs)) # TODO: get q_values from the network you defined, what should the network receive as input?
             actions = torch.argmax(q_values, dim=1).cpu().numpy()
 
@@ -147,9 +148,12 @@ if __name__ == "__main__":
                 # data.observation, data.rewards, data.dones, data.actions
 
                 with torch.no_grad():
-                    # Now we calculate the y_j for non-terminal phi.
+                    # Now we calculate the y_j for non-terminal phi. target network is predicting target value, input is next observation
                     target_max = target_network(data.next_observations).detach().max(1)[0].unsqueeze(1) # TODO: Calculate max Q
                     td_target = data.rewards + params.gamma * target_max # TODO: Calculate the td_target (y_j)
+                    # why two networks? => target net is only getting updated every n steps => otherwise target would fluctuate after each update
+                    # which would be like chasing a moving target; due to second network it stays stable, at least for a short period
+                    # using target network apperantly results in more stable training
 
                 old_val = q_network(data.observations).gather(1, data.actions) # TODO
                 loss = F.mse_loss(old_val, td_target) # TODO calculate loss
